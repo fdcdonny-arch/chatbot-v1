@@ -5,7 +5,7 @@ from langgraph.prebuilt import create_react_agent  # For creating a ReAct agent
 from langchain_core.messages import HumanMessage, AIMessage  # For message formatting
 
 headers = {
-    "authorization": st.secrets["API_KEY"]
+    "authorization": st.secrets["google_api_key"]
 }
     
 
@@ -127,6 +127,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
