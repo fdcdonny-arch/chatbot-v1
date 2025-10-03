@@ -3,11 +3,7 @@ import streamlit as st  # For creating the web app interface
 from langchain_google_genai import ChatGoogleGenerativeAI  # For interacting with Google Gemini via LangChain
 from langgraph.prebuilt import create_react_agent  # For creating a ReAct agent
 from langchain_core.messages import HumanMessage, AIMessage  # For message formatting
-
-headers = {
-    "authorization": st.secrets["google_api_key"]
-}
-    
+   
 
 # --- 1. Page Configuration and Title ---
 
@@ -52,7 +48,7 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         )
         
         # Store the new key in session state to compare against later.
-        st.session_state._last_key = st.secrets
+        st.secrets = google_api_key
         # Since the key changed, we must clear the old message history.
         st.session_state.pop("messages", None)
     except Exception as e:
@@ -127,6 +123,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
