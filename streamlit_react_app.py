@@ -5,7 +5,7 @@ from langgraph.prebuilt import create_react_agent  # For creating a ReAct agent
 from langchain_core.messages import HumanMessage, AIMessage  # For message formatting
 
 headers = {
-    "authorization": st.secrets["API_KEY"],
+    "authorization": st.secrets["API_KEY"]
 }
     
 
@@ -28,11 +28,6 @@ with st.sidebar:
 
 # --- 3. API Key and Agent Initialization ---
 
-# Check if the user has provided an API key.
-# If not, display an informational message and stop the app from running further.
-if not google_api_key:
-    st.info("Tambahkan API Key Anda untuk memulai percakapan.", icon="🗝️")
-    st.stop()
 
 # This block of code handles the creation of the LangGraph agent.
 # It's designed to be efficient: it only creates a new agent if one doesn't exist
@@ -132,6 +127,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
