@@ -69,6 +69,8 @@ Heroku / Render / VPS: jalankan dengan perintah streamlit run streamlit_react_ap
 Project **Asisten IT Chatbot** ini didukung oleh [Hacktiv8](https://hacktiv8.com) sebagai bagian dari program pembelajaran dan pengembangan teknologi.  
 Terima kasih kepada para mentor dan rekan peserta yang telah membantu dalam proses pembuatan project ini.
 
+### 👨‍🏫 Mentor
+- [Adipta Martulandi](https://www.linkedin.com/in/adiptamartulandi/)
 
 
 🤝 Kontribusi
