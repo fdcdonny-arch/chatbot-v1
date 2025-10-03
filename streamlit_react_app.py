@@ -8,22 +8,22 @@ from langchain_core.messages import HumanMessage, AIMessage  # For message forma
 
 # Set the title and a caption for the web page
 st.title("💬 Asisten IT - Chatbot")
-st.caption("Asisten untuk kebutuhan IT Anda")
+st.caption("Selamat datang di Asisten IT - Kami siap membantu")
 
 # --- 2. Sidebar for Settings ---
 
 # Create a sidebar section for app settings using 'with st.sidebar:'
 with st.sidebar:
     # Add a subheader to organize the settings
-    st.subheader("Settings")
+    st.subheader("Pengaturan")
     
     # Create a text input field for the Google AI API Key.
     # 'type="password"' hides the key as the user types it.
-    google_api_key = st.text_input("Google AI API Key", type="password")
+    google_api_key = st.text_input("API Key", type="password")
     
     # Create a button to reset the conversation.
     # 'help' provides a tooltip that appears when hovering over the button.
-    reset_button = st.button("Reset Conversation", help="Clear all messages and start fresh")
+    reset_button = st.button("Reset Percakapan", help="Hapus semua pesan dan mulai baru")
 
 # --- 3. API Key and Agent Initialization ---
 
@@ -45,14 +45,18 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             google_api_key=google_api_key,
-            temperature=0.4
+            temperature=0.2
         )
         
         # Create a simple ReAct agent with the LLM
         st.session_state.agent = create_react_agent(
             model=llm,
             tools=[],  # No tools for this simple example
-            prompt="You are a helpful, friendly assistant. Respond concisely and clearly."
+            prompt="f"""
+    Anda adalah seorang ahli yang hanya menjawab pertanyaan tentang Jaringan & CCTV.
+    Tugas Anda adalah memberikan jawaban HANYA terkait dengan Jaringan & CCTV, seperti Internet tidak terhubung, wifi tidak ada sinyal,
+    internet lambat, CCTV tidal menyala. Jika ada pertanyaan yang tidak berhubungan dengan Jaringan & CCTV, balaslah dengan sopan dan informatif, seperti:
+    "Maaf, saya hanya bisa menjawab pertanyaan seputar Jaringan & CCTV. Apakah ada yang ingin Anda tanyakan tentang Jaringan & CCTV?""
         )
         
         # Store the new key in session state to compare against later.
@@ -131,4 +135,5 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
