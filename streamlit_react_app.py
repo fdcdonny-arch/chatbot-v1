@@ -3,7 +3,6 @@ import streamlit as st  # For creating the web app interface
 from langchain_google_genai import ChatGoogleGenerativeAI  # For interacting with Google Gemini via LangChain
 from langgraph.prebuilt import create_react_agent  # For creating a ReAct agent
 from langchain_core.messages import HumanMessage, AIMessage  # For message formatting
-   
 
 # --- 1. Page Configuration and Title ---
 
@@ -18,12 +17,21 @@ with st.sidebar:
     # Add a subheader to organize the settings
     st.subheader("Pengaturan")
     
+    # Create a text input field for the Google AI API Key.
+    # 'type="password"' hides the key as the user types it.
+    google_api_key = st.text_input("API Key", type="password")
+    
     # Create a button to reset the conversation.
     # 'help' provides a tooltip that appears when hovering over the button.
     reset_button = st.button("Reset Percakapan", help="Hapus semua pesan dan mulai baru")
 
 # --- 3. API Key and Agent Initialization ---
 
+# Check if the user has provided an API key.
+# If not, display an informational message and stop the app from running further.
+if not google_api_key:
+    st.info("Tambahkan API Key Anda untuk memulai percakapan.", icon="🗝️")
+    st.stop()
 
 # This block of code handles the creation of the LangGraph agent.
 # It's designed to be efficient: it only creates a new agent if one doesn't exist
@@ -48,7 +56,7 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         )
         
         # Store the new key in session state to compare against later.
-        st.secrets = google_api_key
+        st.session_state._last_key = google_api_key
         # Since the key changed, we must clear the old message history.
         st.session_state.pop("messages", None)
     except Exception as e:
@@ -123,12 +131,6 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
-
-
-
-
-
-
 
 
 
