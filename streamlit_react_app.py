@@ -52,7 +52,7 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         )
         
         # Store the new key in session state to compare against later.
-        st.session_state._last_key = google_api_key
+        st.session_state._last_key = st.secrets
         # Since the key changed, we must clear the old message history.
         st.session_state.pop("messages", None)
     except Exception as e:
@@ -127,6 +127,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
