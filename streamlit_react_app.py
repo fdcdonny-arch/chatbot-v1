@@ -7,8 +7,8 @@ from langchain_core.messages import HumanMessage, AIMessage  # For message forma
 # --- 1. Page Configuration and Title ---
 
 # Set the title and a caption for the web page
-st.title("💬 LangGraph ReAct Chatbot")
-st.caption("A simple and friendly chat using LangGraph with Google's Gemini model")
+st.title("💬 Asisten IT - Chatbot")
+st.caption("Asisten untuk kebutuhan IT Anda")
 
 # --- 2. Sidebar for Settings ---
 
@@ -129,4 +129,5 @@ if prompt:
     with st.chat_message("assistant"):
         st.markdown(answer)
     # 5. Add the assistant's response to the message history list.
+
     st.session_state.messages.append({"role": "assistant", "content": answer})
