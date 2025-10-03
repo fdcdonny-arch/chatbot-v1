@@ -32,6 +32,23 @@ asisten-it-chatbot/
    ```bash
    git clone https://github.com/fdcdonny-arch/tes-chatbot-v1.git
    cd tes-chatbot-v1
+2. Buat virtual environment (opsional tapi direkomendasikan):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate   # MacOS/Linux
+   venv\Scripts\activate      # Windows
+
+4. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+
+6. Jalankan aplikasi:
+   ```bash
+   streamlit run streamlit_react_app.py
+
+8. Buka di browser:
+   ```
+   http://localhost:8501
 
 
 📖 Contoh Penggunaan
