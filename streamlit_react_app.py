@@ -19,7 +19,7 @@ with st.sidebar:
     
     # Create a text input field for the Google AI API Key.
     # 'type="password"' hides the key as the user types it.
-    google_api_key = st.text_input("API Key", type="password")
+    google_api_key = st.secrets["GOOGLE_API_KEY"]
     
     # Create a button to reset the conversation.
     # 'help' provides a tooltip that appears when hovering over the button.
@@ -44,7 +44,7 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         # Initialize the LLM with the API key
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
-            google_api_key=google_api_key,
+            google_api_key=st.secrets["GOOGLE_API_KEY"],
             temperature=0.2
         )
         
@@ -131,6 +131,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
