@@ -91,7 +91,7 @@ for msg in st.session_state.messages:
 
 # Create a chat input box at the bottom of the page.
 # The user's typed message will be stored in the 'prompt' variable.
-prompt = st.chat_input("Type your message here...")
+prompt = st.chat_input("Apa yang ingin anda tanyakan...")
 
 # Check if the user has entered a message.
 if prompt:
@@ -131,6 +131,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
