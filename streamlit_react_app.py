@@ -30,7 +30,7 @@ with st.sidebar:
 # Check if the user has provided an API key.
 # If not, display an informational message and stop the app from running further.
 if not google_api_key:
-    st.info("Please add your Google AI API key in the sidebar to start chatting.", icon="🗝️")
+    st.info("Tambahkan API Key Anda untuk memulai percakapan.", icon="🗝️")
     st.stop()
 
 # This block of code handles the creation of the LangGraph agent.
@@ -45,7 +45,7 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             google_api_key=google_api_key,
-            temperature=0.7
+            temperature=0.4
         )
         
         # Create a simple ReAct agent with the LLM
@@ -131,3 +131,4 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
