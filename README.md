@@ -2,6 +2,7 @@
 
 Asisten IT Chatbot adalah aplikasi chatbot berbasis **Python** dan **Streamlit** yang dapat membantu menjawab pertanyaan seputar IT, troubleshooting, serta memberikan rekomendasi solusi secara interaktif.
 
+
 ## 🚀 Fitur Utama
 - Chatbot interaktif berbasis web dengan **Streamlit**  
 - Integrasi dengan **LLM / NLP model** untuk memahami pertanyaan pengguna  
@@ -9,11 +10,13 @@ Asisten IT Chatbot adalah aplikasi chatbot berbasis **Python** dan **Streamlit**
 - Antarmuka sederhana dan mudah digunakan  
 - Mudah di-deploy ke **Streamlit Cloud**, **Heroku**, atau **VPS**  
 
+
 ## 🛠️ Teknologi yang Digunakan
 - [Python 3.9+](https://www.python.org/)  
 - [Streamlit](https://streamlit.io/)  
 - [LangChain](https://www.langchain.com/) *(opsional, jika ingin integrasi dengan LLM)*  
 - [GeminiAI API](https://aistudio.google.com/) atau model lain sebagai backend NLP  
+
 
 ## 📂 Struktur Project
 
@@ -30,6 +33,7 @@ asisten-it-chatbot/
    git clone https://github.com/fdcdonny-arch/tes-chatbot-v1.git
    cd tes-chatbot-v1
 
+
 📖 Contoh Penggunaan
 
 Menanyakan troubleshooting jaringan:
@@ -40,3 +44,37 @@ Menanyakan hardware error:
 
 Rekomendasi hardware:
 "Router Wifi yang bagus apa ya?"
+
+
+🖼️ Screenshot
+
+<img width="1718" height="933" alt="Capture66" src="https://github.com/user-attachments/assets/c970aca6-abee-4c05-96ac-5187adc51f4e" />
+
+
+☁️ Deployment
+
+Streamlit Cloud: upload ke GitHub dan hubungkan ke akun Streamlit
+
+Heroku / Render / VPS: jalankan dengan perintah streamlit run streamlit_react_app.py
+
+
+## 🙌 Dukungan
+
+<p align="center">
+  <a href="https://hacktiv8.com" target="_blank">
+    <img src="https://res.cloudinary.com/startup-grind/image/upload/c_fill,dpr_2,f_auto,g_center,q_auto:good/v1/gcs/platform-data-goog/events/LOGO%2520Mebiso%2520Horizontal%25202.png" width="200"/>
+  </a>
+</p>
+
+Project **Asisten IT Chatbot** ini didukung oleh [Hacktiv8](https://hacktiv8.com) sebagai bagian dari program pembelajaran dan pengembangan teknologi.  
+Terima kasih kepada para mentor dan rekan peserta yang telah membantu dalam proses pembuatan project ini.
+
+
+
+🤝 Kontribusi
+
+Pull request sangat diterima! Jika menemukan bug atau ingin menambahkan fitur baru, silakan buat issue terlebih dahulu.
+
+📜 Lisensi
+
+Project ini menggunakan lisensi MIT – silakan gunakan, modifikasi, dan distribusikan dengan bebas.
