@@ -4,6 +4,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI  # For interacting wit
 from langgraph.prebuilt import create_react_agent  # For creating a ReAct agent
 from langchain_core.messages import HumanMessage, AIMessage  # For message formatting
 
+headers = {
+    "authorization": st.secrets["API_KEY"],
+}
+    
+
 # --- 1. Page Configuration and Title ---
 
 # Set the title and a caption for the web page
@@ -16,10 +21,6 @@ st.caption("Selamat datang di Asisten IT - Kami siap membantu")
 with st.sidebar:
     # Add a subheader to organize the settings
     st.subheader("Pengaturan")
-    
-    # Create a text input field for the Google AI API Key.
-    # 'type="password"' hides the key as the user types it.
-    google_api_key = st.text_input("API Key", type="password")
     
     # Create a button to reset the conversation.
     # 'help' provides a tooltip that appears when hovering over the button.
@@ -131,6 +132,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
