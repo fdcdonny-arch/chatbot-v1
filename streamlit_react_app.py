@@ -52,11 +52,7 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         st.session_state.agent = create_react_agent(
             model=llm,
             tools=[],  # No tools for this simple example
-            prompt="f"""
-    Anda adalah seorang ahli yang hanya menjawab pertanyaan tentang Jaringan & CCTV.
-    Tugas Anda adalah memberikan jawaban HANYA terkait dengan Jaringan & CCTV, seperti Internet tidak terhubung, wifi tidak ada sinyal,
-    internet lambat, CCTV tidal menyala. Jika ada pertanyaan yang tidak berhubungan dengan Jaringan & CCTV, balaslah dengan sopan dan informatif, seperti:
-    "Maaf, saya hanya bisa menjawab pertanyaan seputar Jaringan & CCTV. Apakah ada yang ingin Anda tanyakan tentang Jaringan & CCTV?""
+            prompt=f"""Anda adalah seorang ahli yang hanya menjawab pertanyaan tentang Jaringan & CCTV. Tugas Anda adalah memberikan jawaban HANYA terkait dengan Jaringan & CCTV, seperti Internet tidak terhubung, wifi tidak ada sinyal, internet lambat, CCTV tidal menyala. Jika ada pertanyaan yang tidak berhubungan dengan Jaringan & CCTV, balaslah dengan sopan dan informatif, seperti: "Maaf, saya hanya bisa menjawab pertanyaan seputar Jaringan & CCTV. Apakah ada yang ingin Anda tanyakan tentang Jaringan & CCTV?""
         )
         
         # Store the new key in session state to compare against later.
@@ -135,5 +131,6 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
