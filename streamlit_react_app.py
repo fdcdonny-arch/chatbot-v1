@@ -51,7 +51,10 @@ with st.sidebar:
 
     # Create a button to reset the conversation.
     # 'help' provides a tooltip that appears when hovering over the button.
-    reset_button = st.button("Reset Percakapan", help="Hapus semua pesan dan mulai baru")
+    reset_button = st.button(
+        "Reset Percakapan", 
+        help="Hapus semua pesan dan mulai baru"
+    )
 
 # --- 3. API Key and Agent Initialization ---
 
@@ -162,6 +165,7 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
+
 
 
 
