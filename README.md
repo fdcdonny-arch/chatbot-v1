@@ -65,7 +65,8 @@ Rekomendasi hardware:
 
 🖼️ Screenshot
 
-<img width="1718" height="933" alt="Capture66" src="https://github.com/user-attachments/assets/c970aca6-abee-4c05-96ac-5187adc51f4e" />
+<img width="1034" height="785" alt="image" src="https://github.com/user-attachments/assets/5b0eceb7-e02c-4b6b-9f26-edeb7f9f19ea" />
+
 
 
 ☁️ Deployment
