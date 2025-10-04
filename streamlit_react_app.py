@@ -20,7 +20,35 @@ with st.sidebar:
     # Create a text input field for the Google AI API Key.
     # 'type="password"' hides the key as the user types it.
     google_api_key = st.secrets["GOOGLE_API_KEY"]
-    
+
+    # Slider
+    temperature = st.slider(
+        "Tingkat Kreativitas",
+        min_value=0.0,
+        max_value=2.0,
+        value=0.5,
+        step=0.05,
+        help="Nilai yang lebih tinggi membuat respons lebih kreatif dan kurang dapat diprediksi."
+    )
+
+    # Thinking Toggle
+    thinking_enabled = st.toggle(
+        "Aktifkan Mode Berpikir", 
+        value=True,
+        help="Mode berpikir menggunakan parameter 'thinkingBudget' untuk meningkatkan penalaran dalam model tertentu. Menonaktifkannya dapat mengurangi latensi."
+    )
+
+    # Maximum output tokens
+    # Maximum output tokens
+    max_output_tokens = st.number_input(
+        "Token Output Maksimum",
+        min_value=1,
+        max_value=4096,
+        value=1024,
+        step=1,
+        help="Setel token output maksimum yang diinginkan di sini"
+    )
+
     # Create a button to reset the conversation.
     # 'help' provides a tooltip that appears when hovering over the button.
     reset_button = st.button("Reset Percakapan", help="Hapus semua pesan dan mulai baru")
@@ -45,7 +73,9 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             google_api_key=st.secrets["GOOGLE_API_KEY"],
-            temperature=0.2
+            temperature=temperature,
+            thinking_enabled=thinking_enabled,
+            max_output_tokens=max_output_tokens
         )
         
         # Create a simple ReAct agent with the LLM
@@ -70,13 +100,14 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Handle the reset button click.
-if reset_button:
-    # If the reset button is clicked, clear the agent and message history from memory.
-    st.session_state.pop("agent", None)
-    st.session_state.pop("messages", None)
-    # st.rerun() tells Streamlit to refresh the page from the top.
-    st.rerun()
+# Initialize chat history display function
+def display_messages():
+    """Display all messages in the chat history"""
+    for msg in st.session_state.messages:
+        author = "user" if msg["role"] == "user" else "assistant"
+        with st.chat_message(author):
+            st.write(msg["content"])    
+
 
 # --- 5. Display Past Messages ---
 
@@ -131,7 +162,6 @@ if prompt:
     # 5. Add the assistant's response to the message history list.
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
-
 
 
 
