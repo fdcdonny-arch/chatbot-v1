@@ -50,26 +50,13 @@ with st.sidebar:
     max_output_tokens = st.number_input("Token Output Maksimum", 1, 4096, 1024, 1)
     reset_button = st.button("🔄 Reset Percakapan", help="Hapus semua pesan dan mulai baru")
 
-# --- 4. Reset Percakapan dengan Efek Fade-Out ---
+# --- 4. Reset Percakapan ---
 if reset_button:
-    st.session_state.messages = []
-    st.markdown(
-        """
-        <style>
-        .fade-out { animation: fadeOut 0.9s ease-out forwards; }
-        @keyframes fadeOut { 0% {opacity: 1;} 100% {opacity: 0;} }
-        </style>
-        <script>
-        const chatContainer = window.parent.document.querySelector('.main');
-        if (chatContainer) {
-            chatContainer.classList.add('fade-out');
-            setTimeout(() => { window.parent.location.reload(); }, 850);
-        }
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
-    st.stop()
+    # If the reset button is clicked, clear the agent and message history from memory.
+    st.session_state.pop("agent", None)
+    st.session_state.pop("messages", None)
+    # st.rerun() tells Streamlit to refresh the page from the top.
+    st.rerun()
 
 # --- 5. Validasi API Key ---
 if not google_api_key:
@@ -205,3 +192,4 @@ if prompt:
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses permintaan: {e}")
+
