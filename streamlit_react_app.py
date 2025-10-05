@@ -1,172 +1,207 @@
-# Import the necessary libraries
-import streamlit as st  # For creating the web app interface
-from langchain_google_genai import ChatGoogleGenerativeAI  # For interacting with Google Gemini via LangChain
-from langgraph.prebuilt import create_react_agent  # For creating a ReAct agent
-from langchain_core.messages import HumanMessage, AIMessage  # For message formatting
+# ============================================================
+#  💬 Asisten IT Chatbot dengan Dukungan Suara (STT + TTS + Cursor Blink)
+#  Dibuat oleh Donny Fir | Streamlit + Gemini + gTTS
+# ============================================================
 
-# --- 1. Page Configuration and Title ---
+# --- 1. Import Library ---
+import streamlit as st
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, AIMessage
+from streamlit_mic_recorder import mic_recorder
+import tempfile
+import speech_recognition as sr
+from gtts import gTTS
+import os
+import time
 
-# Set the title and a caption for the web page
+# --- 2. Konfigurasi Halaman ---
+st.set_page_config(page_title="Asisten IT Chatbot", page_icon="💬")
+st.markdown(
+    """
+    <style>
+    body { animation: fadeIn 0.8s ease-in; }
+    @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+    .blinking-cursor {
+        font-weight: bold;
+        font-size: 1.1em;
+        color: #4A90E2;
+        animation: blink 1s infinite;
+    }
+    @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 st.title("💬 Asisten IT - Chatbot")
-st.caption("Selamat datang di Asisten IT - Kami siap membantu")
+st.caption("Selamat datang di Asisten IT — Kami siap membantu Anda!")
 
-# --- 2. Sidebar for Settings ---
-
-# Create a sidebar section for app settings using 'with st.sidebar:'
+# --- 3. Sidebar Pengaturan ---
 with st.sidebar:
-    # Add a subheader to organize the settings
-    st.subheader("Pengaturan")
-    
-    # Create a text input field for the Google AI API Key.
-    # 'type="password"' hides the key as the user types it.
+    st.subheader("⚙️ Pengaturan")
+
     google_api_key = st.secrets["GOOGLE_API_KEY"]
 
-    # Slider
-    temperature = st.slider(
-        "Tingkat Kreativitas",
-        min_value=0.0,
-        max_value=2.0,
-        value=0.5,
-        step=0.05,
-        help="Nilai yang lebih tinggi membuat respons lebih kreatif dan kurang dapat diprediksi."
+    temperature = st.slider("Tingkat Kreativitas", 0.0, 2.0, 0.5, 0.05)
+    thinking_enabled = st.toggle("Aktifkan Mode Berpikir", value=True)
+    max_output_tokens = st.number_input("Token Output Maksimum", 1, 4096, 1024, 1)
+    reset_button = st.button("🔄 Reset Percakapan", help="Hapus semua pesan dan mulai baru")
+
+# --- 4. Reset Percakapan dengan Efek Fade-Out ---
+if reset_button:
+    st.session_state.messages = []
+    st.markdown(
+        """
+        <style>
+        .fade-out { animation: fadeOut 0.9s ease-out forwards; }
+        @keyframes fadeOut { 0% {opacity: 1;} 100% {opacity: 0;} }
+        </style>
+        <script>
+        const chatContainer = window.parent.document.querySelector('.main');
+        if (chatContainer) {
+            chatContainer.classList.add('fade-out');
+            setTimeout(() => { window.parent.location.reload(); }, 850);
+        }
+        </script>
+        """,
+        unsafe_allow_html=True
     )
-
-    # Thinking Toggle
-    thinking_enabled = st.toggle(
-        "Aktifkan Mode Berpikir", 
-        value=True,
-        help="Mode berpikir menggunakan parameter 'thinkingBudget' untuk meningkatkan penalaran dalam model tertentu. Menonaktifkannya dapat mengurangi latensi."
-    )
-
-    # Maximum output tokens
-    # Maximum output tokens
-    max_output_tokens = st.number_input(
-        "Token Output Maksimum",
-        min_value=1,
-        max_value=4096,
-        value=1024,
-        step=1,
-        help="Setel token output maksimum yang diinginkan di sini"
-    )
-
-    # Create a button to reset the conversation.
-    # 'help' provides a tooltip that appears when hovering over the button.
-    reset_button = st.button(
-        "Reset Percakapan", 
-        help="Hapus semua pesan dan mulai baru"
-    )
-
-# --- 3. API Key and Agent Initialization ---
-
-# Check if the user has provided an API key.
-# If not, display an informational message and stop the app from running further.
-if not google_api_key:
-    st.info("Tambahkan API Key Anda untuk memulai percakapan.", icon="🗝️")
     st.stop()
 
-# This block of code handles the creation of the LangGraph agent.
-# It's designed to be efficient: it only creates a new agent if one doesn't exist
-# or if the user has changed the API key in the sidebar.
+# --- 5. Validasi API Key ---
+if not google_api_key:
+    st.info("🗝️ Tambahkan API Key Anda untuk memulai percakapan.", icon="🔐")
+    st.stop()
 
-# We use `st.session_state` which is Streamlit's way of "remembering" variables
-# between user interactions (like sending a message or clicking a button).
+# --- 6. Inisialisasi Agent ---
 if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", None) != google_api_key):
     try:
-        # Initialize the LLM with the API key
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
-            google_api_key=st.secrets["GOOGLE_API_KEY"],
+            google_api_key=google_api_key,
             temperature=temperature,
             thinking_enabled=thinking_enabled,
             max_output_tokens=max_output_tokens
         )
-        
-        # Create a simple ReAct agent with the LLM
         st.session_state.agent = create_react_agent(
             model=llm,
-            tools=[],  # No tools for this simple example
-            prompt="Anda adalah seorang ahli yang hanya menjawab pertanyaan tentang Jaringan & CCTV. Tugas Anda adalah memberikan jawaban HANYA terkait dengan Jaringan & CCTV, seperti Internet tidak terhubung, wifi tidak ada sinyal, internet lambat, CCTV tidal menyala. Jika ada pertanyaan yang tidak berhubungan dengan Jaringan & CCTV, balaslah dengan sopan dan informatif, seperti: Maaf, saya hanya bisa menjawab pertanyaan seputar Jaringan & CCTV. Apakah ada yang ingin Anda tanyakan tentang Jaringan & CCTV?"
+            tools=[],
+            prompt=(
+                "Anda adalah seorang ahli yang hanya menjawab pertanyaan tentang Jaringan & CCTV. "
+                "Berikan solusi teknis yang sopan dan informatif. "
+                "Jika pertanyaan di luar topik, balas dengan: "
+                "'Maaf, saya hanya bisa menjawab pertanyaan seputar Jaringan & CCTV. "
+                "Apakah ada yang ingin Anda tanyakan tentang hal itu?'"
+            )
         )
-        
-        # Store the new key in session state to compare against later.
         st.session_state._last_key = google_api_key
-        # Since the key changed, we must clear the old message history.
         st.session_state.pop("messages", None)
     except Exception as e:
-        # If the key is invalid, show an error and stop.
-        st.error(f"Invalid API Key or configuration error: {e}")
+        st.error(f"Terjadi kesalahan konfigurasi API: {e}")
         st.stop()
 
-# --- 4. Chat History Management ---
-
-# Initialize the message history (as a list) if it doesn't exist.
+# --- 7. Inisialisasi Riwayat Pesan ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Initialize chat history display function
-def display_messages():
-    """Display all messages in the chat history"""
-    for msg in st.session_state.messages:
-        author = "user" if msg["role"] == "user" else "assistant"
-        with st.chat_message(author):
-            st.write(msg["content"])    
-
-
-# --- 5. Display Past Messages ---
-
-# Loop through every message currently stored in the session state.
+# --- 8. Tampilkan Riwayat Pesan Lama ---
 for msg in st.session_state.messages:
-    # For each message, create a chat message bubble with the appropriate role ("user" or "assistant").
     with st.chat_message(msg["role"]):
-        # Display the content of the message using Markdown for nice formatting.
         st.markdown(msg["content"])
 
-# --- 6. Handle User Input and Agent Communication ---
+# --- 9. Input Suara / Teks ---
+st.markdown("### 🎙️ Gunakan suara atau ketik pertanyaan Anda:")
 
-# Create a chat input box at the bottom of the page.
-# The user's typed message will be stored in the 'prompt' variable.
-prompt = st.chat_input("Apa yang ingin anda tanyakan...")
+audio = mic_recorder(start_prompt="Mulai Rekam 🎤", stop_prompt="Berhenti Rekam ⏹️", just_once=True, use_container_width=True, format="wav")
+voice_text = ""
 
-# Check if the user has entered a message.
+if audio is not None:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+        tmp.write(audio["bytes"])
+        tmp_path = tmp.name
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(tmp_path) as source:
+        audio_data = recognizer.record(source)
+        try:
+            voice_text = recognizer.recognize_google(audio_data, language="id-ID")
+            st.success(f"🎧 Hasil transkripsi suara: **{voice_text}**")
+        except sr.UnknownValueError:
+            st.warning("⚠️ Tidak dapat mengenali suara.")
+        except sr.RequestError:
+            st.error("🚫 Gagal menghubungkan ke layanan pengenalan suara.")
+
+prompt = st.chat_input("Apa yang ingin Anda tanyakan...") or voice_text
+
+# --- 10A. Deteksi Permintaan Jawaban Singkat ---
+short_request_keywords = [
+    "singkat", "ringkas", "cepat", "to the point",
+    "secukupnya", "pendek", "nggak usah panjang", "jawaban aja"
+]
+
+is_short_answer = any(keyword in prompt.lower() for keyword in short_request_keywords)
+
+
+# --- 10B. Pemrosesan Chat ---
 if prompt:
-    # 1. Add the user's message to our message history list.
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # 2. Display the user's message on the screen immediately for a responsive feel.
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 3. Get the assistant's response.
-    # Use a 'try...except' block to gracefully handle potential errors (e.g., network issues, API errors).
     try:
-        # Convert the message history to the format expected by the agent
+        # Siapkan riwayat percakapan untuk model
         messages = []
         for msg in st.session_state.messages:
             if msg["role"] == "user":
                 messages.append(HumanMessage(content=msg["content"]))
             elif msg["role"] == "assistant":
                 messages.append(AIMessage(content=msg["content"]))
-        
-        # Send the user's prompt to the agent
-        response = st.session_state.agent.invoke({"messages": messages})
-        
-        # Extract the answer from the response
-        if "messages" in response and len(response["messages"]) > 0:
-            answer = response["messages"][-1].content
-        else:
-            answer = "I'm sorry, I couldn't generate a response."
+
+        # Tambahkan konteks tambahan berdasarkan mode jawaban
+        extra_instruction = (
+            "Jawablah secara **singkat dan padat**, tanpa penjelasan tambahan."
+            if is_short_answer
+            else "Berikan penjelasan yang lengkap dan mudah dipahami."
+        )
+
+        # Masukkan instruksi tambahan ke pesan terakhir
+        messages.append(
+            HumanMessage(content=f"{prompt}\n\nInstruksi tambahan: {extra_instruction}")
+        )
+
+        with st.chat_message("assistant"):
+            with st.spinner("💭 Asisten sedang berpikir..."):
+                response = st.session_state.agent.invoke({"messages": messages})
+
+            # Ambil hasil jawaban model
+            if "messages" in response and len(response["messages"]) > 0:
+                answer = response["messages"][-1].content
+            else:
+                answer = "Maaf, saya tidak dapat menghasilkan respons."
+
+            # === ✨ Efek Mengetik + Cursor Berkedip ===
+            placeholder = st.empty()
+            displayed_text = ""
+            cursor_html = '<span class="blinking-cursor">█</span>'
+            for char in answer:
+                displayed_text += char
+                placeholder.markdown(displayed_text + cursor_html, unsafe_allow_html=True)
+                time.sleep(0.015)
+            placeholder.markdown(displayed_text, unsafe_allow_html=True)
+
+            # === 🎧 Text-to-Speech (AI Bicara) ===
+            try:
+                tts = gTTS(text=answer, lang="id")
+                tts_path = os.path.join(tempfile.gettempdir(), "ai_voice.mp3")
+                tts.save(tts_path)
+                st.audio(tts_path, format="audio/mp3")
+            except Exception as e:
+                st.warning(f"🔇 Gagal memutar suara balasan: {e}")
+
+        # Simpan ke riwayat percakapan
+        st.session_state.messages.append({"role": "assistant", "content": answer})
 
     except Exception as e:
-        # If any error occurs, create an error message to display to the user.
-        answer = f"An error occurred: {e}"
-
-    # 4. Display the assistant's response.
-    with st.chat_message("assistant"):
-        st.markdown(answer)
-    # 5. Add the assistant's response to the message history list.
-
-    st.session_state.messages.append({"role": "assistant", "content": answer})
-
-
-
-
-
+        st.error(f"Terjadi kesalahan saat memproses permintaan: {e}")
