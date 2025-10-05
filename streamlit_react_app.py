@@ -14,6 +14,7 @@ import speech_recognition as sr
 from gtts import gTTS
 import os
 import time
+import json
 
 # --- 2. Konfigurasi Halaman ---
 st.set_page_config(page_title="Asisten IT Chatbot", page_icon="💬")
@@ -39,31 +40,77 @@ st.markdown(
 st.title("💬 Asisten IT - Chatbot")
 st.caption("Selamat datang di Asisten IT — Kami siap membantu Anda!")
 
-# --- 3. Sidebar Pengaturan ---
+# File tempat menyimpan riwayat chat
+CHAT_HISTORY_FILE = os.path.join(tempfile.gettempdir(), "chat_history.json")
+
+# --- 3. Fungsi Simpan & Muat Riwayat ---
+def save_chat_history(messages):
+    """Simpan riwayat chat ke file JSON lokal."""
+    try:
+        with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(messages, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        st.warning(f"Gagal menyimpan riwayat chat: {e}")
+
+def load_chat_history():
+    """Muat riwayat chat dari file JSON jika tersedia."""
+    if os.path.exists(CHAT_HISTORY_FILE):
+        try:
+            with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            st.warning(f"Gagal memuat riwayat chat: {e}")
+    return []
+
+# --- 4. Sidebar Pengaturan ---
 with st.sidebar:
     st.subheader("⚙️ Pengaturan")
 
     google_api_key = st.secrets["GOOGLE_API_KEY"]
 
-    temperature = st.slider("Tingkat Kreativitas", 0.0, 2.0, 0.5, 0.05)
-    thinking_enabled = st.toggle("Aktifkan Mode Berpikir", value=True)
-    max_output_tokens = st.number_input("Token Output Maksimum", 1, 4096, 1024, 1)
-    reset_button = st.button("🔄 Reset Percakapan", help="Hapus semua pesan dan mulai baru")
+    temperature = st.slider("Tingkat Kreativitas", 0.0, 2.0, 0.5, 0.05, help="Nilai yang lebih tinggi membuat respons lebih kreatif dan kurang dapat diprediksi.")
+    thinking_enabled = st.toggle("Aktifkan Mode Berpikir", value=True, help="Mode berpikir menggunakan parameter 'thinkingBudget' untuk meningkatkan penalaran dalam model tertentu. Menonaktifkannya dapat mengurangi latensi.")
+    max_output_tokens = st.number_input("Token Output Maksimum", 1, 4096, 1024, 1, help="Setel token output maksimum yang diinginkan di sini")
+    reset_button = st.button("🔄 Reset Percakapan", use_container_width=True, help="Hapus semua pesan dan mulai baru")
 
-# --- 4. Reset Percakapan ---
+    # --- Tombol Simpan & Muat Riwayat ---
+    st.markdown("---")
+    st.subheader("💾 Manajemen Riwayat")
+
+    save_history_button = st.button("💾 Simpan Riwayat", use_container_width=True)
+    load_history_button = st.button("📂 Muat Riwayat", use_container_width=True)
+
+    if save_history_button:
+        try:
+            save_chat_history(st.session_state.get("messages", []))
+            st.success("✅ Riwayat percakapan berhasil disimpan ke file lokal.")
+        except Exception as e:
+            st.error(f"Gagal menyimpan riwayat: {e}")
+
+    if load_history_button:
+        try:
+            st.session_state.messages = load_chat_history()
+            st.success("📂 Riwayat percakapan berhasil dimuat.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Gagal memuat riwayat: {e}")
+
+
+# --- 5. Reset Percakapan ---
 if reset_button:
-    # If the reset button is clicked, clear the agent and message history from memory.
-    st.session_state.pop("agent", None)
-    st.session_state.pop("messages", None)
-    # st.rerun() tells Streamlit to refresh the page from the top.
+    for key in ["agent", "messages", "voice_text", "audio"]:
+        st.session_state.pop(key, None)
+    if os.path.exists(CHAT_HISTORY_FILE):
+        os.remove(CHAT_HISTORY_FILE)
     st.rerun()
 
-# --- 5. Validasi API Key ---
+
+# --- 6. Validasi API Key ---
 if not google_api_key:
     st.info("🗝️ Tambahkan API Key Anda untuk memulai percakapan.", icon="🔐")
     st.stop()
 
-# --- 6. Inisialisasi Agent ---
+# --- 7. Inisialisasi Agent ---
 if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", None) != google_api_key):
     try:
         llm = ChatGoogleGenerativeAI(
@@ -90,17 +137,17 @@ if ("agent" not in st.session_state) or (getattr(st.session_state, "_last_key", 
         st.error(f"Terjadi kesalahan konfigurasi API: {e}")
         st.stop()
 
-# --- 7. Inisialisasi Riwayat Pesan ---
+# --- 8. Inisialisasi Riwayat Pesan ---
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = load_chat_history()
 
-# --- 8. Tampilkan Riwayat Pesan Lama ---
+# --- 9. Tampilkan Riwayat Pesan Lama ---
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# --- 9. Input Suara / Teks ---
-st.markdown("### 🎙️ Gunakan suara atau ketik pertanyaan Anda:")
+# --- 10. Input Suara / Teks ---
+st.markdown("Gunakan suara atau ketik pertanyaan Anda:")
 
 audio = mic_recorder(start_prompt="Mulai Rekam 🎤", stop_prompt="Berhenti Rekam ⏹️", just_once=True, use_container_width=True, format="wav")
 voice_text = ""
@@ -120,25 +167,15 @@ if audio is not None:
         except sr.RequestError:
             st.error("🚫 Gagal menghubungkan ke layanan pengenalan suara.")
 
-prompt = st.chat_input("Apa yang ingin Anda tanyakan...") or voice_text
+prompt = voice_text if voice_text else st.chat_input("Apa yang ingin Anda tanyakan...")
 
-# --- 10A. Deteksi Permintaan Jawaban Singkat ---
-short_request_keywords = [
-    "singkat", "ringkas", "cepat", "to the point",
-    "secukupnya", "pendek", "nggak usah panjang", "jawaban aja"
-]
-
-is_short_answer = any(keyword in prompt.lower() for keyword in short_request_keywords)
-
-
-# --- 10B. Pemrosesan Chat ---
+# --- 11. Pemrosesan Chat ---
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        # Siapkan riwayat percakapan untuk model
         messages = []
         for msg in st.session_state.messages:
             if msg["role"] == "user":
@@ -146,25 +183,13 @@ if prompt:
             elif msg["role"] == "assistant":
                 messages.append(AIMessage(content=msg["content"]))
 
-        # Tambahkan konteks tambahan berdasarkan mode jawaban
-        extra_instruction = (
-            "Jawablah secara **singkat dan padat**, tanpa penjelasan tambahan."
-            if is_short_answer
-            else "Berikan penjelasan yang lengkap dan mudah dipahami."
-        )
-
-        # Masukkan instruksi tambahan ke pesan terakhir
-        messages.append(
-            HumanMessage(content=f"{prompt}\n\nInstruksi tambahan: {extra_instruction}")
-        )
-
         with st.chat_message("assistant"):
             with st.spinner("💭 Asisten sedang berpikir..."):
                 response = st.session_state.agent.invoke({"messages": messages})
 
-            # Ambil hasil jawaban model
-            if "messages" in response and len(response["messages"]) > 0:
-                answer = response["messages"][-1].content
+            answer = response.get("messages", [])
+            if answer:
+                answer = answer[-1].content
             else:
                 answer = "Maaf, saya tidak dapat menghasilkan respons."
 
@@ -175,7 +200,8 @@ if prompt:
             for char in answer:
                 displayed_text += char
                 placeholder.markdown(displayed_text + cursor_html, unsafe_allow_html=True)
-                time.sleep(0.015)
+                delay = 0.005 if len(answer) > 500 else 0.015
+                time.sleep(delay)
             placeholder.markdown(displayed_text, unsafe_allow_html=True)
 
             # === 🎧 Text-to-Speech (AI Bicara) ===
@@ -187,9 +213,10 @@ if prompt:
             except Exception as e:
                 st.warning(f"🔇 Gagal memutar suara balasan: {e}")
 
-        # Simpan ke riwayat percakapan
         st.session_state.messages.append({"role": "assistant", "content": answer})
+
+        # 💾 Simpan otomatis setiap kali ada balasan baru
+        save_chat_history(st.session_state.messages)
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses permintaan: {e}")
-
